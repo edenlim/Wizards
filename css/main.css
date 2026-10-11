@@ -37,3 +37,15 @@ pre { white-space: pre-wrap; background: #242639; padding: 20px; border-radius: 
 
 .battle-actions { position: relative; }
 .meditation-preview { position: absolute; top: 100%; left: 0; width: min(440px, 100%); box-sizing: border-box; z-index: 2; box-shadow: 0 8px 24px #0006; }
+
+/* Background layer stays separate from future combatant and spell overlays. */
+.battle-arena {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  aspect-ratio: 32 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #91b5d6 url("../assets/background.svg") center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}

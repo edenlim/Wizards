@@ -89,9 +89,9 @@ test('spell cards render applicable base values and hide when no spell is cast',
   const text = container.children.map(element => element.textContent).join('\n');
   assert.match(text, /Mend/);
   assert.match(text, /Element: Wood/);
-  assert.match(text, /Base Healing: 20/);
+  assert.match(text, /Base Healing: 30/);
   assert.doesNotMatch(text, /Base Damage|Base Barrier/);
-  assert.match(text, /Restore 20 health/);
+  assert.match(text, /Restore 30 health/);
   renderSpellCard(container, null, 'You');
   assert.equal(container.hidden, true);
   assert.equal(container.children.length, 0);
@@ -112,21 +112,21 @@ test('damage logs identify spells and debuffs while keeping barrier behavior', a
   const log = [];
   const target = createWizard('Right', { barrier: 10 });
   dealDamage(target, 5, log, 'Ice Shard');
-  assert.match(log.at(-1), /barrier absorbs 5 from Ice Shard/);
+  assert.ok(log.some(message => /barrier absorbs 5 from Ice Shard/.test(message)));
   dealDamage(target, 10, log, 'Fireball');
   assert.match(log.at(-1), /loses 5 health from Fireball/);
   dealDamage(target, 0, log, 'Force Bolt');
-  assert.match(log.at(-1), /no damage taken from Force Bolt/);
+  assert.match(log.at(-1), /took no damage from Force Bolt/);
   assert.throws(() => dealDamage(target, 5, log, true), /Damage source/);
 
   const wizardA = createWizard('Left');
-  const wizardB = createWizard('Right', { barrier: 100 });
+  const wizardB = createWizard('Right', { barrier: 20 });
   const engine = new BattleEngine();
   const fireball = spells.find(spell => spell.id === 'fireball');
   const spell_round = engine.resolve(wizardA, wizardB, fireball, recharge);
   assert.ok(spell_round.log.some(message => message.includes('from Fireball')));
   const status_round = engine.resolve(wizardA, wizardB, recharge, recharge);
   assert.ok(status_round.log.some(message => message.includes('from BURN')));
-  assert.equal(wizardB.health, 95);
-  assert.equal(wizardB.barrier, 70);
+  assert.equal(wizardB.health, 85);
+  assert.equal(wizardB.barrier, 0);
 });

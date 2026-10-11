@@ -43,11 +43,12 @@ test('new effects and passive hooks work without changing engine', () => {
 });
 test('burn starts next round, bypasses barrier, expires; health is clamped', () => {
   const engine = new BattleEngine();
-  const wizardA = createWizard('A'), wizardB = createWizard('B', { barrier: 100 });
+  const wizardA = createWizard('A'), wizardB = createWizard('B');
   engine.resolve(wizardA, wizardB, spell('Fire', 30, [{ type: 'DAMAGE_DIRECT' }, { type: 'APPLY_STATUS', status: 'BURN', duration: 2, tickDamage: 5 }]), spell('Kinetic', 0));
-  assert.equal(wizardB.health, 100);
+  assert.equal(wizardB.health, 70);
+  wizardB.barrier = 100;
   for (let round_number = 0; round_number < 2; round_number++) engine.resolve(wizardA, wizardB, spell('Kinetic', 0), spell('Kinetic', 0));
-  assert.equal(wizardB.health, 90); assert.equal(wizardB.activeStatuses.length, 0);
+  assert.equal(wizardB.health, 60); assert.equal(wizardB.activeStatuses.length, 0);
   engine.resolve(wizardA, wizardB, spell('Kinetic', 1000), spell('Kinetic', 0));
   assert.equal(wizardB.health, 0);
 });

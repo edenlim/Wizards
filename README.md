@@ -288,9 +288,12 @@ Both actions are validated first. Mana regenerates by a flat 10 at round start
 (the README's eventual percentage regeneration is not implemented). Existing
 statuses tick next, then spells consume mana and clash. A lethal status tick ends
 the duel before either spell casts. Offensive effects require a won clash;
-self effects resolve even when their spell loses. Effects resolve in wizard A,
-then wizard B order, and in their spell's listed order; for this MVP a newly
-conjured barrier does not absorb an earlier opponent hit. New burn statuses
+self effects resolve even when their spell loses. Spell effects resolve in shared phases:
+all healing and mana restoration, then all barriers, then clash calculation and
+damage, then remaining effects such as new debuffs. Each phase processes both
+wizards before advancing. Array order only orders effects within the same phase.
+A newly conjured barrier absorbs incoming spell damage this round. New debuffs
+require health damage to penetrate the barrier. New burn statuses
 begin ticking next round, bypass barriers, and expire after their listed duration.
 Repeated statuses stack independently. Fractional damage is preserved.
 
@@ -334,3 +337,26 @@ scene manager, and a `dispose` function for the application lifetime.
 
 The spell menu lives in `js/UI/SpellMenu.js`. Shared card and preview details live in
 `js/UI/spellDetails.js`; previews always show damage, healing, and barrier, including zero values.
+
+### Effect execution phases
+
+Register an effect with `register(type, resolver, { phase })`. Supported phases
+are `healing`, `barrier`, `damage`, and `afterDamage`. The default is `afterDamage`
+for compatibility with custom effects. Built-in healing and mana restoration use
+`healing`; barrier creation uses `barrier`; direct damage uses `damage`; new
+statuses use `afterDamage`. A spell can compose any combination, regardless of
+its effects array order. Self effects must specify `target: "self"`.
+
+```js
+engine.effects.register("GREATER_HEAL", (effect, battle_round) => {
+  battle_round.caster.health = Math.min(
+    battle_round.caster.maxHealth,
+    battle_round.caster.health + effect.amount
+  );
+}, { phase: "healing" });
+```
+
+`beforeClash` hooks now run after healing and barrier creation. `afterClash`
+hooks run after calculating the clash and before applying its damage. Per-action
+effect contexts persist between phases, so a status effect can inspect
+`healthDamageDealt`. Existing statuses still tick at round start.

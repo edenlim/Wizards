@@ -2,7 +2,7 @@ import { BattleRound } from "./DamageCalculations/BattleRound.js";
 import { DamagePipeline } from "./DamageCalculations/DamagePipeline.js";
 import { calculateClash } from "./DamageCalculations/calculateClash.js";
 import { createDefaultEffects } from "./Effects/defaultEffects.js";
-import { executeSpellEffects } from "./Spells/executeSpellEffects.js";
+import { executeEffectPhase } from "./Spells/executeSpellEffects.js";
 import { regenerateMana, consumeSpellMana } from "./Wizards/mana.js";
 import { tickStatuses } from "./Statuses/tickStatuses.js";
 import { validateBattleRound } from "./validateBattleRound.js";
@@ -31,31 +31,60 @@ export class BattleEngine {
   resolve(wizardA, wizardB, spellA, spellB) {
     const battle_round = new BattleRound({ wizardA, wizardB, spellA, spellB, factorN: this.factorN });
     validateBattleRound(battle_round, this.effects);
-    for (const wizard of [wizardA, wizardB]) {
+    this.startRound(battle_round);
+
+    const both_wizards_alive = wizardA.health > 0 && wizardB.health > 0;
+    if (both_wizards_alive) {
+      this.resolveClash(battle_round);
+    }
+
+    this.finishRound(battle_round);
+    return battle_round;
+  }
+
+  startRound(battle_round) {
+    for (const wizard of [battle_round.wizardA, battle_round.wizardB]) {
       regenerateMana(wizard);
       tickStatuses(wizard, battle_round);
     }
     this.hooks.roundStart.calculate(battle_round);
     battle_round.spellsCast = false;
-    if (wizardA.health > 0 && wizardB.health > 0) this.resolveClash(battle_round);
-    this.hooks.roundEnd.calculate(battle_round);
-    battle_round.winner = getBattleWinner(wizardA, wizardB);
-    return battle_round;
   }
 
   resolveClash(battle_round) {
-    battle_round.actions.forEach(consumeSpellMana);
+    for (const action of battle_round.actions) {
+      consumeSpellMana(action);
+    }
+
+    // Complete each phase for both sides before moving to the next phase.
+    executeEffectPhase(battle_round, this.effects, "healing");
+    executeEffectPhase(battle_round, this.effects, "barrier");
+    this.calculateRoundDamage(battle_round);
+    executeEffectPhase(battle_round, this.effects, "damage");
+    executeEffectPhase(battle_round, this.effects, "afterDamage");
+  }
+
+  calculateRoundDamage(battle_round) {
     this.hooks.beforeClash.calculate(battle_round);
-    battle_round.finalDamage = calculateClash(...battle_round.actions, battle_round.factorN);
+
+    const [actionA, actionB] = battle_round.actions;
+    battle_round.finalDamage = calculateClash(actionA, actionB, battle_round.factorN);
     this.hooks.afterClash.calculate(battle_round);
-    if (!Number.isFinite(battle_round.finalDamage)) throw new Error("Invalid final damage.");
+
+    if (!Number.isFinite(battle_round.finalDamage)) {
+      throw new Error("Invalid final damage.");
+    }
+
+    const remaining_damage = Math.abs(battle_round.finalDamage);
     battle_round.log.push(
-      `${battle_round.spellA.name} vs ${battle_round.spellB.name}: ${Math.abs(battle_round.finalDamage)} remaining damage.`
+      `${battle_round.spellA.name} vs ${battle_round.spellB.name}: ${remaining_damage} remaining damage.`
     );
     battle_round.spellsCast = true;
-    const [actionA, actionB] = battle_round.actions;
     logDamageCalculation(actionA, actionB, battle_round.factorN, battle_round.finalDamage);
-    executeSpellEffects(actionA, battle_round, this.effects, Math.max(0, battle_round.finalDamage));
-    executeSpellEffects(actionB, battle_round, this.effects, Math.max(0, -battle_round.finalDamage));
+  }
+
+  finishRound(battle_round) {
+    this.hooks.roundEnd.calculate(battle_round);
+    battle_round.winner = getBattleWinner(battle_round.wizardA, battle_round.wizardB);
   }
 }

@@ -7,7 +7,13 @@ export class DamagePipeline {
     return this;
   }
   calculate(battle_round) {
-    return this.modifiers.reduce((battle_round, modifier) => modifier(battle_round) ?? battle_round, battle_round);
+    for (const modifier of this.modifiers) {
+      const modified_battle_round = modifier(battle_round);
+      if (modified_battle_round !== undefined && modified_battle_round !== null) {
+        battle_round = modified_battle_round;
+      }
+    }
+    return battle_round;
   }
 }
 
