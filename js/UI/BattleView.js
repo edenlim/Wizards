@@ -47,7 +47,8 @@ export class BattleView {
     this.root.querySelector(".battle-container").classList.toggle("has-cast", Boolean(lastCast));
     renderSpellCard(this.root.querySelector("#player-hand"), lastCast?.[0], wizardA.name);
     renderSpellCard(this.root.querySelector("#opponent-hand"), lastCast?.[1], wizardB.name);
-    renderWizardStats(this.root.querySelector("#stats"), wizardA, wizardB);
+    renderWizardStats(this.root.querySelector("#your_stats"), wizardA);
+    renderWizardStats(this.root.querySelector("#enemy_stats"), wizardB);
     this.cast_button.disabled = duel_over;
     this.meditate_button.disabled = duel_over || !this.meditation_spell;
     this.spell_menu.updateAvailability(wizardA, duel_over);

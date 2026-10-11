@@ -28,7 +28,12 @@ pre { white-space: pre-wrap; background: #242639; padding: 20px; border-radius: 
 #spell_preview { background: #30334b; border-radius: 8px; padding: 16px; overflow-wrap: anywhere; }
 #spell_preview h3 { margin-top: 0; }
 .meditation-preview { background: #30334b; padding: 16px; margin-top: 12px; border-radius: 8px; line-height: 1.6; }
-@media (max-width: 600px) { .spell-menu-content { grid-template-columns: 1fr; } }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.stats pre { margin: 0; }
+@media (max-width: 600px) {
+  .stats { grid-template-columns: 1fr; }
+  .spell-menu-content { grid-template-columns: 1fr; }
+}
 
 .battle-actions { position: relative; }
 .meditation-preview { position: absolute; top: 100%; left: 0; width: min(440px, 100%); box-sizing: border-box; z-index: 2; box-shadow: 0 8px 24px #0006; }

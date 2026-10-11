@@ -7,6 +7,7 @@ import { regenerateMana, consumeSpellMana } from "./Wizards/mana.js";
 import { tickStatuses } from "./Statuses/tickStatuses.js";
 import { validateBattleRound } from "./validateBattleRound.js";
 import { getBattleWinner } from "./Wizards/getBattleWinner.js";
+import { logDamageCalculation } from "./DamageCalculations/logDamageCalculation.js";
 
 export { createWizard } from "./Wizards/createWizard.js";
 
@@ -53,6 +54,7 @@ export class BattleEngine {
     );
     battle_round.spellsCast = true;
     const [actionA, actionB] = battle_round.actions;
+    logDamageCalculation(actionA, actionB, battle_round.factorN, battle_round.finalDamage);
     executeSpellEffects(actionA, battle_round, this.effects, Math.max(0, battle_round.finalDamage));
     executeSpellEffects(actionB, battle_round, this.effects, Math.max(0, -battle_round.finalDamage));
   }

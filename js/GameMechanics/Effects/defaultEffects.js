@@ -21,4 +21,3 @@ export function createDefaultEffects() {
       battle_round.log.push(`${battle_round.target.name} gains ${effect.status} for ${effect.duration} rounds.`);
     });
 }
-
