@@ -1,0 +1,34 @@
+body { font-family: system-ui, sans-serif; max-width: 850px; margin: 40px auto; padding: 0 20px; background: #141522; color: #eee; }
+button, select { padding: 12px; margin: 8px 4px 8px 0; border-radius: 6px; }
+button { cursor: pointer; }
+pre { white-space: pre-wrap; background: #242639; padding: 20px; border-radius: 8px; line-height: 1.7; }
+
+.battle-container { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: 16px; }
+.battle-container.has-cast { grid-template-columns: minmax(0, 20fr) minmax(0, 60fr) minmax(0, 20fr); }
+.hand, #battle_log { box-sizing: border-box; min-width: 0; padding: 16px; overflow-wrap: anywhere; }
+.hand { background: #30334b; border-radius: 8px; }
+.hand[hidden] { display: none; }
+.hand h3 { margin: 8px 0 16px; }
+.hand p { margin: 10px 0; }
+.hand small { color: #bbbfdc; }
+#battle_log { white-space: pre-wrap; background: #242639; border-radius: 8px; line-height: 1.7; }
+
+[hidden] { display: none !important; }
+.battle-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+#grimmore { background: #242639; border: 2px solid #9199cb; border-radius: 12px; padding: 20px; margin-top: 16px; }
+.menu-heading { display: flex; justify-content: space-between; align-items: center; }
+.menu-heading h3 { margin: 0; }
+#grimmore_elements { display: flex; flex-wrap: wrap; gap: 4px; margin: 12px 0; }
+#grimmore_elements button[aria-pressed="true"] { background: #bfc7ff; color: #141522; }
+.spell-menu-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+#list_of_spells { display: flex; flex-direction: column; max-height: 380px; overflow-y: auto; }
+#list_of_spells button { text-align: left; margin: 0 0 6px; }
+#list_of_spells button:hover, #list_of_spells button:focus-visible { background: #d7dcff; outline: 2px solid #bfc7ff; }
+#list_of_spells button[aria-disabled="true"] { opacity: .6; }
+#spell_preview { background: #30334b; border-radius: 8px; padding: 16px; overflow-wrap: anywhere; }
+#spell_preview h3 { margin-top: 0; }
+.meditation-preview { background: #30334b; padding: 16px; margin-top: 12px; border-radius: 8px; line-height: 1.6; }
+@media (max-width: 600px) { .spell-menu-content { grid-template-columns: 1fr; } }
+
+.battle-actions { position: relative; }
+.meditation-preview { position: absolute; top: 100%; left: 0; width: min(440px, 100%); box-sizing: border-box; z-index: 2; box-shadow: 0 8px 24px #0006; }

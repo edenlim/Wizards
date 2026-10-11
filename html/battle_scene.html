@@ -1,0 +1,22 @@
+<h2>Wizard Duel</h2>
+<p>Choose a spell. Your rival chooses secretly; both spells clash together. Element factor: 2.</p>
+<pre id="stats"></pre>
+<div class="battle-container">
+    <div id="player-hand" class="hand" hidden></div>
+    <div id="battle_log" aria-live="polite">The duel begins! Choose your spell!</div>
+    <div id="opponent-hand" class="hand" hidden></div>
+</div>
+<div class="battle-actions">
+    <button id="cast" aria-expanded="false" aria-controls="grimmore">Spells</button>
+    <button id="meditate" aria-describedby="meditation_preview">Meditate</button>
+    <button id="restart">Restart duel</button>
+    <div id="meditation_preview" class="meditation-preview" hidden></div>
+</div>
+<section id="grimmore" aria-label="Spell menu" hidden>
+    <div class="menu-heading"><h3>Your grimoire</h3><button id="close-spells">Back</button></div>
+    <div id="grimmore_elements" aria-label="Filter spells by element"></div>
+    <div class="spell-menu-content">
+        <div id="list_of_spells" aria-label="Available spells"></div>
+        <div id="spell_preview" aria-live="polite"></div>
+    </div>
+</section>
