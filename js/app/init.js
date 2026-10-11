@@ -1,7 +1,7 @@
 import { BattleController } from "../battle/BattleController.js";
-import { mountBattle } from "../ui/BattleView.js";
+import { mountBattle } from "../UI/BattleView.js";
 import { SceneManager } from "./SceneManager.js";
-import { mountOpponentSpellControl } from "../ui/OpponentSpellControl.js";
+import { mountOpponentSpellControl } from "../UI/OpponentSpellControl.js";
 
 // Composition root: dependencies and application lifetime are wired in one place.
 export async function initApp(document_root = document) {

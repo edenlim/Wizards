@@ -1,0 +1,17 @@
+# Development dependencies and repository metadata are not website assets.
+node_modules/
+.git/
+.wrangler/
+.vscode/
+tests/
+.DS_Store
+.gitignore
+.assetsignore
+package.json
+package-lock.json
+wrangler.json
+wrangler.jsonc
+wrangler.toml
+README.md
+document.md
+js/statuses/README.md
