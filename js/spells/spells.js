@@ -1,4 +1,12 @@
-import { createSpell, createDamageSpell } from "./createSpell.js";
+export function createSpell({ id, name, element, basePower = 0, manaCost = 0, description, effects = [] }) {
+  return { id, name, element, basePower, manaCost, description, effects };
+}
+
+export function createDamageSpell(id, name, element, basePower, manaCost, description) {
+  return createSpell({ id, name, element, basePower, manaCost, description,
+    effects: [{ type: "DAMAGE_DIRECT" }],
+  });
+}
 
 export const fireball = createSpell({
   id: "fireball", name: "Fireball", element: "Fire", basePower: 30, manaCost: 20,
@@ -8,6 +16,14 @@ export const fireball = createSpell({
     { type: "APPLY_STATUS", status: "BURN", duration: 3, tickDamage: 5 },
   ],
 });
+export const snapFreeze = createSpell({
+  id: "snap_freeze", name: "Snap Freeze", element: "Water", basePower: 10, manaCost: 15,
+  description: "Snap freezes an enemy, freezes regardless of barrier",
+  effects: [
+    { type: "DAMAGE_DIRECT" },
+    { type: "APPLY_STATUS", status: "FREEZE", duration: 1, bypassBarrier: true },
+  ]
+})
 export const iceShard = createDamageSpell("ice_shard", "Ice Shard", "Water", 20, 15,
   "Hurl a shard of ice into the opposing spell.");
 export const greatBallOfFire = createDamageSpell("great_ball_of_fire", "Great Ball of Fire", "Fire", 50, 40,

@@ -1,7 +1,6 @@
-import { BattleController } from "./Controllers/BattleController.js";
-import { mountBattle } from "./battle.js";
-import { SceneManager } from "./scene.js";
-import { loadEventListeners } from "./eventlistener_handler.js";
+import { BattleController } from "../battle/BattleController.js";
+import { mountBattle } from "../ui/BattleView.js";
+import { SceneManager } from "./SceneManager.js";
 
 // Composition root: dependencies and application lifetime are wired in one place.
 export async function initApp(document_root = document) {
@@ -23,4 +22,10 @@ export async function initApp(document_root = document) {
     scene_manager,
     dispose() { unbind_events(); scene_manager.dispose(); },
   };
+}
+
+export function loadEventListeners(toggle_button, scene_manager, onError) {
+  const toggle_listener = () => { scene_manager.switchScene().catch(onError); };
+  toggle_button.addEventListener("click", toggle_listener);
+  return () => toggle_button.removeEventListener("click", toggle_listener);
 }

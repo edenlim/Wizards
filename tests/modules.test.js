@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BattleController } from '../js/Controllers/BattleController.js';
-import { BattleEngine } from '../js/GameMechanics/BattleEngine.js';
-import { createWizard } from '../js/GameMechanics/Wizards/createWizard.js';
-import { spells } from '../js/GameMechanics/Spells/spells.js';
-import { SceneManager } from '../js/scene.js';
-import { renderSpellCard } from '../js/UI/renderSpellCard.js';
+import { BattleController } from '../js/battle/BattleController.js';
+import { BattleEngine } from '../js/battle/BattleEngine.js';
+import { createWizard } from '../js/battle/wizard.js';
+import { spells } from '../js/spells/spells.js';
+import { SceneManager } from '../js/app/SceneManager.js';
+import { renderSpellCard } from '../js/ui/spellDetails.js';
 
 const recharge = spells.find(spell => spell.id === 'recharge');
 test('the complete spell catalog works with a standalone engine', () => {
@@ -98,7 +98,7 @@ test('spell cards render applicable base values and hide when no spell is cast',
 });
 
 test('meditation previews match actual mana gained, including the mana cap', async () => {
-  const { getMeditationGain } = await import('../js/UI/spellDetails.js');
+  const { getMeditationGain } = await import('../js/ui/spellDetails.js');
   for (const mana of [0, 30, 85, 100]) {
     const wizardA = createWizard('Left', { mana });
     const expected_gain = getMeditationGain(wizardA, recharge);
@@ -108,7 +108,7 @@ test('meditation previews match actual mana gained, including the mana cap', asy
 });
 
 test('damage logs identify spells and debuffs while keeping barrier behavior', async () => {
-  const { dealDamage } = await import('../js/GameMechanics/DamageCalculations/dealDamage.js');
+  const { dealDamage } = await import('../js/battle/damage.js');
   const log = [];
   const target = createWizard('Right', { barrier: 10 });
   dealDamage(target, 5, log, 'Ice Shard');

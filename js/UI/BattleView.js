@@ -1,7 +1,5 @@
-import { renderSpellCard } from "./renderSpellCard.js";
-import { renderWizardStats } from "./renderWizardStats.js";
+import { renderSpellCard, getEffectAmount, getMeditationGain } from "./spellDetails.js";
 import { SpellMenu } from "./SpellMenu.js";
-import { getEffectAmount, getMeditationGain } from "./spellDetails.js";
 
 export class BattleView {
   constructor(root) {
@@ -58,4 +56,29 @@ export class BattleView {
     }
     this.battle_log.textContent = message;
   }
+}
+
+export function renderWizardStats(container, wizard) {
+   const statuses = wizard.activeStatuses
+      .map(status => `${status.status} (${status.duration})`).join(", ") || "None";
+   container.textContent = `${wizard.name}:\nHP: ${wizard.health}/${wizard.maxHealth}\nMana: ${wizard.mana}/${wizard.maxMana}\nBarrier: ${wizard.barrier}\nStatuses: ${statuses}`;
+}
+
+// Scene adapter: connect UI events to a supplied controller, then return cleanup.
+export function mountBattle(root, battle_controller) {
+  const battle_view = new BattleView(root);
+  battle_view.populateSpells(battle_controller.spells);
+  const unbind_actions = battle_view.bindActions({
+    onCast(spell_id) {
+      try { battle_controller.cast(spell_id); }
+      catch (error) { battle_controller.message = error.message; }
+      battle_view.render(battle_controller);
+    },
+    onRestart() {
+      battle_controller.restart();
+      battle_view.render(battle_controller);
+    },
+  });
+  battle_view.render(battle_controller);
+  return unbind_actions;
 }

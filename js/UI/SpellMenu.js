@@ -1,5 +1,5 @@
-import { elements } from "../GameMechanics/Elements/relationships.js";
-import { canAffordSpell } from "../GameMechanics/Wizards/mana.js";
+import { elements } from "../battle/damage.js";
+import { canAffordSpell } from "../battle/wizard.js";
 import { renderSpellDetails } from "./spellDetails.js";
 
 export class SpellMenu {

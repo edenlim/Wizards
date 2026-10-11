@@ -234,53 +234,15 @@ Restart starts a fresh duel; switching scenes preserves the combatants.
 
 ### Architecture and extension points
 
-- `js/init.js` wires application dependencies together. `main.js` starts the app.
-- `js/scene.js` manages scene fetching, caching, mounting, and cleanup. It receives scene definitions instead of importing battle logic.
-- `js/Controllers/BattleController.js` owns one duel's state and actions without depending on the DOM. `selectOpponentSpell.js` provides the replaceable rival strategy.
-- `js/battle.js` connects a controller to `js/UI/BattleView.js`. Separate renderers handle spell cards and wizard stats.
-- `js/GameMechanics/BattleEngine.js` coordinates the round lifecycle, validation, hooks, and effect execution.
-- `DamageCalculations/BattleRound.js` holds the round context. `DamagePipeline.js` runs hooks; `calculateClash.js` computes elemental clashes; `dealDamage.js` applies barrier absorption and health damage.
-- `Elements/relationships.js` contains the elemental cycles.
-- `Wizards/` contains wizard creation, mana rules, and victory resolution. `Statuses/tickStatuses.js` handles status ticking and expiry.
-- `Effects/EffectRegistry.js` handles registration and dispatch. `defaultEffects.js` installs built-in effects, including mana recharge.
-- `Spells/createSpell.js` supplies spell factories, `spells.js` defines the catalog, and `executeSpellEffects.js` executes composed effects.
-- `Spells/effect.js` preserves earlier public exports; `BattleEngine.js` still re-exports `createWizard`, and `DamagePipeline.js` still re-exports clash calculation and elements.
+JavaScript is grouped into `app`, `battle`, `effects`, `statuses`, `spells`, and `ui`.
+See [document.md](document.md) for the complete file map and round pipeline, and
+[js/statuses/README.md](js/statuses/README.md) for status callbacks.
 
-Add a spell by composing registered effects in `spells`. Its `basePower` controls
-clash strength; `DAMAGE_DIRECT` applies the surviving clash damage once. Use only
-one `DAMAGE_DIRECT` entry per spell. `amount` is not a second source of clash damage.
-
-Register a new effect at application setup, without changing the engine or existing spells
-(`RESTORE_MANA` is already built in; this example adds a different effect):
-
-```js
-engine.effects.register("MANA_GIFT", (effect, { caster }) => {
-  caster.mana = Math.min(caster.maxMana, caster.mana + effect.amount);
-});
-// A spell can now include:
-// { type: "MANA_GIFT", target: "self", amount: 30 }
-```
-
-Add passive effects from equipment, tome bonuses, or statuses through hooks:
-
-```js
-engine.use("beforeClash", battle_round => {
-  for (const action of battle_round.actions) {
-    if (action.caster.equipment?.boostElement === action.element) {
-      action.power *= 1.15;
-    }
-  }
-});
-```
-
-Hooks run in registration order: `roundStart`, `beforeClash`, `afterClash`,
-`roundEnd`. Modifiers mutate the round context and may return it. Change action
-`power` or `element` before the clash, `factorN` for elemental interaction, and
-signed `finalDamage` after the clash (positive hits B, negative hits A). Treat
-spell definitions as immutable; change action fields instead. Effects receive
-a `battle_round` context containing round fields plus
-`{ caster, target, spell, power, element, damage }`. Unknown effects fail
-explicitly. Register plugins before resolving rounds.
+Add spell definitions in `js/spells/spells.js`, effects in
+`js/effects/defaultEffects.js`, and separate status definitions in
+`js/statuses/definitions/`. Register statuses in `js/statuses/index.js`.
+Effect callbacks receive `(effect, battle_round, action)`: round data and action
+results are explicit references rather than a copied context.
 
 ### MVP timing and scope
 
@@ -293,14 +255,14 @@ all healing and mana restoration, then all barriers, then clash calculation and
 damage, then remaining effects such as new debuffs. Each phase processes both
 wizards before advancing. Array order only orders effects within the same phase.
 A newly conjured barrier absorbs incoming spell damage this round. New debuffs
-require health damage to penetrate the barrier. New burn statuses
+require health damage unless the status effect bypasses barriers. New burn statuses
 begin ticking next round, bypass barriers, and expire after their listed duration.
-Repeated statuses stack independently. Fractional damage is preserved.
+Repeated Burn instances stack independently; each status defines its own application rule. Fractional damage is preserved.
 
 Kinetic and identical elements use direct subtraction. Element factor defaults
 to 2 and must be at least 1. Health cannot fall below zero. Healing caps at maximum
 health. The demo includes all six elements, healing, barriers, burn, and recharge.
-Ice Shard currently has no freeze effect because freeze behavior is not defined.
+Ice Shard has no freeze effect. Snap Freeze is defined separately but is not currently included in the menu catalog.
 
 This is a combat foundation. Tournament progression, shops, equipment inventory,
 extra spell collisions, percentage mana regeneration, and richer status rules
@@ -316,47 +278,4 @@ swaps their identities. Use `battle_round` for round contexts and descriptive
 names for callback variables. The elemental formula arguments `weaker_element`
 and `stronger_element` represent those elements' spell powers.
 
-### Wiring a custom duel
-
-```js
-import { BattleEngine } from "./js/GameMechanics/BattleEngine.js";
-import { BattleController } from "./js/Controllers/BattleController.js";
-
-const engine = new BattleEngine();
-// Register custom effects and passive hooks here.
-const battle_controller = new BattleController({ engine });
-battle_controller.cast("fireball");
-```
-
-`BattleController` also accepts `spell_catalog`, `opponent_selector`, and
-`wizard_factory` dependencies. A new controller creates an independent duel.
-`mountBattle(root, battle_controller)` binds its view and returns listener cleanup.
-`SceneManager` accepts a scene dictionary and a `fetch_html` dependency; each scene
-may provide a `mount` function that returns cleanup. `initApp` returns the controller,
-scene manager, and a `dispose` function for the application lifetime.
-
-The spell menu lives in `js/UI/SpellMenu.js`. Shared card and preview details live in
-`js/UI/spellDetails.js`; previews always show damage, healing, and barrier, including zero values.
-
-### Effect execution phases
-
-Register an effect with `register(type, resolver, { phase })`. Supported phases
-are `healing`, `barrier`, `damage`, and `afterDamage`. The default is `afterDamage`
-for compatibility with custom effects. Built-in healing and mana restoration use
-`healing`; barrier creation uses `barrier`; direct damage uses `damage`; new
-statuses use `afterDamage`. A spell can compose any combination, regardless of
-its effects array order. Self effects must specify `target: "self"`.
-
-```js
-engine.effects.register("GREATER_HEAL", (effect, battle_round) => {
-  battle_round.caster.health = Math.min(
-    battle_round.caster.maxHealth,
-    battle_round.caster.health + effect.amount
-  );
-}, { phase: "healing" });
-```
-
-`beforeClash` hooks now run after healing and barrier creation. `afterClash`
-hooks run after calculating the clash and before applying its damage. Per-action
-effect contexts persist between phases, so a status effect can inspect
-`healthDamageDealt`. Existing statuses still tick at round start.
+See [document.md](document.md) for custom engines, effect phases, and casting restrictions.

@@ -1,4 +1,4 @@
-import { generating, overcoming } from "../Elements/relationships.js";
+import { generating, overcoming } from "./damage.js";
 
 /**
  * Detailed step-by-step console logging for spell clash damage calculations.
