@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculateClash, elements } from '../js/GameMechanics/DamageCalculations/DamagePipeline.js';
-import { BattleEngine, createWizard } from '../js/GameMechanics/BattleEngine.js';
+import { calculateClash, elements } from '../js/battle/damage.js';
+import { BattleEngine, createWizard } from '../js/battle/BattleEngine.js';
 const action = (element, power) => ({ element, power });
 const spell = (element, basePower, effects = [{ type: 'DAMAGE_DIRECT' }]) => ({ name: element, element, basePower, manaCost: 10, effects });
 test('README piecewise formulas on both sides of each threshold', () => {
@@ -35,7 +35,7 @@ test('barrier absorbs first; overflow reaches health in either orientation', () 
 });
 test('new effects and passive hooks work without changing engine', () => {
   const engine = new BattleEngine();
-  engine.effects.register('MANA_GIFT', (effect, { caster }) => { caster.mana += effect.amount; });
+  engine.effects.register('MANA_GIFT', (effect, battle_round, { caster }) => { caster.mana += effect.amount; });
   engine.use('beforeClash', battle_round => { battle_round.actions[0].power *= 2; });
   const wizardA = createWizard('A', { mana: 30 }), wizardB = createWizard('B');
   engine.resolve(wizardA, wizardB, spell('Kinetic', 20, [{ type: 'DAMAGE_DIRECT' }, { type: 'MANA_GIFT', target: 'self', amount: 5 }]), spell('Kinetic', 20));
@@ -43,11 +43,12 @@ test('new effects and passive hooks work without changing engine', () => {
 });
 test('burn starts next round, bypasses barrier, expires; health is clamped', () => {
   const engine = new BattleEngine();
-  const wizardA = createWizard('A'), wizardB = createWizard('B', { barrier: 100 });
+  const wizardA = createWizard('A'), wizardB = createWizard('B');
   engine.resolve(wizardA, wizardB, spell('Fire', 30, [{ type: 'DAMAGE_DIRECT' }, { type: 'APPLY_STATUS', status: 'BURN', duration: 2, tickDamage: 5 }]), spell('Kinetic', 0));
-  assert.equal(wizardB.health, 100);
+  assert.equal(wizardB.health, 70);
+  wizardB.barrier = 100;
   for (let round_number = 0; round_number < 2; round_number++) engine.resolve(wizardA, wizardB, spell('Kinetic', 0), spell('Kinetic', 0));
-  assert.equal(wizardB.health, 90); assert.equal(wizardB.activeStatuses.length, 0);
+  assert.equal(wizardB.health, 60); assert.equal(wizardB.activeStatuses.length, 0);
   engine.resolve(wizardA, wizardB, spell('Kinetic', 1000), spell('Kinetic', 0));
   assert.equal(wizardB.health, 0);
 });

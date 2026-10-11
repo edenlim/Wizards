@@ -1,4 +1,4 @@
-import { getRoundMana } from "../GameMechanics/Wizards/mana.js";
+import { getRoundMana } from "../battle/wizard.js";
 
 export function getEffectAmount(spell, effect_type) {
   return (spell.effects ?? []).filter(effect => effect.type === effect_type)
@@ -42,6 +42,7 @@ export function renderSpellDetails(container, spell, { showAllValues = false, ow
   const parameter_names = {
     amount: "Amount", target: "Target", status: "Status",
     duration: "Rounds", tickDamage: "Damage per round", bypassBarrier: "Bypasses barrier",
+    bypassClash: "Applies without winning clash",
   };
   for (const effect of spell.effects ?? []) {
     const parameters = Object.entries(effect).filter(([key]) => key !== "type")
@@ -52,4 +53,8 @@ export function renderSpellDetails(container, spell, { showAllValues = false, ow
     const name = effect_names[effect.type] ?? effect.type.replaceAll("_", " ").toLowerCase();
     appendText("p", `Effect: ${name}${parameters ? ` (${parameters})` : ""}`);
   }
+}
+
+export function renderSpellCard(container, spell, owner) {
+  renderSpellDetails(container, spell, { owner });
 }

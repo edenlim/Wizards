@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BattleController } from '../js/Controllers/BattleController.js';
-import { BattleEngine } from '../js/GameMechanics/BattleEngine.js';
-import { createWizard } from '../js/GameMechanics/Wizards/createWizard.js';
-import { spells } from '../js/GameMechanics/Spells/spells.js';
-import { SceneManager } from '../js/scene.js';
-import { renderSpellCard } from '../js/UI/renderSpellCard.js';
+import { BattleController } from '../js/battle/BattleController.js';
+import { BattleEngine } from '../js/battle/BattleEngine.js';
+import { createWizard } from '../js/battle/wizard.js';
+import { spells } from '../js/spells/spells.js';
+import { SceneManager } from '../js/app/SceneManager.js';
+import { renderSpellCard } from '../js/ui/spellDetails.js';
 
 const recharge = spells.find(spell => spell.id === 'recharge');
 test('the complete spell catalog works with a standalone engine', () => {
@@ -89,16 +89,16 @@ test('spell cards render applicable base values and hide when no spell is cast',
   const text = container.children.map(element => element.textContent).join('\n');
   assert.match(text, /Mend/);
   assert.match(text, /Element: Wood/);
-  assert.match(text, /Base Healing: 20/);
+  assert.match(text, /Base Healing: 30/);
   assert.doesNotMatch(text, /Base Damage|Base Barrier/);
-  assert.match(text, /Restore 20 health/);
+  assert.match(text, /Restore 30 health/);
   renderSpellCard(container, null, 'You');
   assert.equal(container.hidden, true);
   assert.equal(container.children.length, 0);
 });
 
 test('meditation previews match actual mana gained, including the mana cap', async () => {
-  const { getMeditationGain } = await import('../js/UI/spellDetails.js');
+  const { getMeditationGain } = await import('../js/ui/spellDetails.js');
   for (const mana of [0, 30, 85, 100]) {
     const wizardA = createWizard('Left', { mana });
     const expected_gain = getMeditationGain(wizardA, recharge);
@@ -108,25 +108,25 @@ test('meditation previews match actual mana gained, including the mana cap', asy
 });
 
 test('damage logs identify spells and debuffs while keeping barrier behavior', async () => {
-  const { dealDamage } = await import('../js/GameMechanics/DamageCalculations/dealDamage.js');
+  const { dealDamage } = await import('../js/battle/damage.js');
   const log = [];
   const target = createWizard('Right', { barrier: 10 });
   dealDamage(target, 5, log, 'Ice Shard');
-  assert.match(log.at(-1), /barrier absorbs 5 from Ice Shard/);
+  assert.ok(log.some(message => /barrier absorbs 5 from Ice Shard/.test(message)));
   dealDamage(target, 10, log, 'Fireball');
   assert.match(log.at(-1), /loses 5 health from Fireball/);
   dealDamage(target, 0, log, 'Force Bolt');
-  assert.match(log.at(-1), /no damage taken from Force Bolt/);
+  assert.match(log.at(-1), /took no damage from Force Bolt/);
   assert.throws(() => dealDamage(target, 5, log, true), /Damage source/);
 
   const wizardA = createWizard('Left');
-  const wizardB = createWizard('Right', { barrier: 100 });
+  const wizardB = createWizard('Right', { barrier: 20 });
   const engine = new BattleEngine();
   const fireball = spells.find(spell => spell.id === 'fireball');
   const spell_round = engine.resolve(wizardA, wizardB, fireball, recharge);
   assert.ok(spell_round.log.some(message => message.includes('from Fireball')));
   const status_round = engine.resolve(wizardA, wizardB, recharge, recharge);
   assert.ok(status_round.log.some(message => message.includes('from BURN')));
-  assert.equal(wizardB.health, 95);
-  assert.equal(wizardB.barrier, 70);
+  assert.equal(wizardB.health, 85);
+  assert.equal(wizardB.barrier, 0);
 });

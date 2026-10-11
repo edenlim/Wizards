@@ -20,15 +20,44 @@ pre { white-space: pre-wrap; background: #242639; padding: 20px; border-radius: 
 .menu-heading h3 { margin: 0; }
 #grimmore_elements { display: flex; flex-wrap: wrap; gap: 4px; margin: 12px 0; }
 #grimmore_elements button[aria-pressed="true"] { background: #bfc7ff; color: #141522; }
-.spell-menu-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
-#list_of_spells { display: flex; flex-direction: column; max-height: 380px; overflow-y: auto; }
-#list_of_spells button { text-align: left; margin: 0 0 6px; }
+.spell-menu-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 20px; height: 380px; overflow-anchor: none; }
+#list_of_spells { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+#list_of_spells button { flex: 0 0 auto; text-align: left; margin: 0 0 6px; }
 #list_of_spells button:hover, #list_of_spells button:focus-visible { background: #d7dcff; outline: 2px solid #bfc7ff; }
 #list_of_spells button[aria-disabled="true"] { opacity: .6; }
-#spell_preview { background: #30334b; border-radius: 8px; padding: 16px; overflow-wrap: anywhere; }
+#spell_preview { box-sizing: border-box; height: 100%; min-width: 0; min-height: 0; contain: size layout; overflow-y: auto; overflow-anchor: none; overscroll-behavior: contain; scrollbar-gutter: stable; background: #30334b; border-radius: 8px; padding: 16px; overflow-wrap: anywhere; }
 #spell_preview h3 { margin-top: 0; }
 .meditation-preview { background: #30334b; padding: 16px; margin-top: 12px; border-radius: 8px; line-height: 1.6; }
-@media (max-width: 600px) { .spell-menu-content { grid-template-columns: 1fr; } }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.wizard-stats { background: #242639; padding: 20px; border-radius: 8px; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
+.wizard-stats h3 { margin: 0 0 8px; }
+.wizard-stats ul { margin: 0; padding-left: 20px; }
+@media (max-width: 600px) {
+  .stats { grid-template-columns: 1fr; }
+  .spell-menu-content { grid-template-columns: 1fr; height: auto; grid-template-rows: 250px 280px; }
+}
 
 .battle-actions { position: relative; }
 .meditation-preview { position: absolute; top: 100%; left: 0; width: min(440px, 100%); box-sizing: border-box; z-index: 2; box-shadow: 0 8px 24px #0006; }
+
+/* Background layer stays separate from future combatant and spell overlays. */
+.battle-arena {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  isolation: isolate;
+  width: 100%;
+  aspect-ratio: 32 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #91b5d6 url("../assets/background.svg") center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+
+.battle-animation-layer { position: absolute; inset: 0; pointer-events: none; }
+.arena-wizard { position: absolute; bottom: 8%; width: 15%; max-width: 128px; height: auto; image-rendering: pixelated; }
+.wizard-a { left: 8%; }
+.wizard-b { right: 8%; }
+.arena-bolt { position: absolute; top: 65%; width: 12%; aspect-ratio: 3; transform: translate(-50%, -50%); mask: url('../assets/lightning.svg') center / contain no-repeat; -webkit-mask: url('../assets/lightning.svg') center / contain no-repeat; }
+.bolt-1 { transform: translate(-50%, -50%) scaleX(-1); }
+.arena-explosion { position: absolute; left: 50%; top: 65%; width: 10%; aspect-ratio: 1; mask: url('../assets/explosion.svg') center / contain no-repeat; -webkit-mask: url('../assets/explosion.svg') center / contain no-repeat; }

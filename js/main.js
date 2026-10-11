@@ -1,4 +1,4 @@
-import { initApp } from "./init.js";
+import { initApp } from "./app/init.js";
 
 initApp().catch(error => {
   console.error(error);
