@@ -42,6 +42,7 @@ export function renderSpellDetails(container, spell, { showAllValues = false, ow
   const parameter_names = {
     amount: "Amount", target: "Target", status: "Status",
     duration: "Rounds", tickDamage: "Damage per round", bypassBarrier: "Bypasses barrier",
+    bypassClash: "Applies without winning clash",
   };
   for (const effect of spell.effects ?? []) {
     const parameters = Object.entries(effect).filter(([key]) => key !== "type")

@@ -45,8 +45,10 @@ export class SpellMenu {
   }
 
   previewSpell(spell) {
+    if (this.preview_spell === spell) return;
     this.preview_spell = spell;
     renderSpellDetails(this.preview, spell, { showAllValues: true });
+    this.preview.scrollTop = 0;
   }
 
   setOpen(is_open) {

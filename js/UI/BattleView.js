@@ -1,5 +1,6 @@
 import { renderSpellCard, getEffectAmount, getMeditationGain } from "./spellDetails.js";
 import { SpellMenu } from "./SpellMenu.js";
+import { mountBattleAnimation } from "./BattleAnimation.js";
 
 export class BattleView {
   constructor(root) {
@@ -45,8 +46,8 @@ export class BattleView {
     this.root.querySelector(".battle-container").classList.toggle("has-cast", Boolean(lastCast));
     renderSpellCard(this.root.querySelector("#player-hand"), lastCast?.[0], wizardA.name);
     renderSpellCard(this.root.querySelector("#opponent-hand"), lastCast?.[1], wizardB.name);
-    renderWizardStats(this.root.querySelector("#your_stats"), wizardA);
-    renderWizardStats(this.root.querySelector("#enemy_stats"), wizardB);
+    renderWizardStats(this.root.querySelector("#your_stats"), wizardA, battle_controller.engine.statuses);
+    renderWizardStats(this.root.querySelector("#enemy_stats"), wizardB, battle_controller.engine.statuses);
     this.cast_button.disabled = duel_over;
     this.meditate_button.disabled = duel_over || !this.meditation_spell;
     this.spell_menu.updateAvailability(wizardA, duel_over);
@@ -58,27 +59,61 @@ export class BattleView {
   }
 }
 
-export function renderWizardStats(container, wizard) {
-   const statuses = wizard.activeStatuses
-      .map(status => `${status.status} (${status.duration})`).join(", ") || "None";
-   container.textContent = `${wizard.name}:\nHP: ${wizard.health}/${wizard.maxHealth}\nMana: ${wizard.mana}/${wizard.maxMana}\nBarrier: ${wizard.barrier}\nStatuses: ${statuses}`;
+export function renderWizardStats(container, wizard, status_registry) {
+  const document_root = container.ownerDocument;
+  container.replaceChildren();
+
+  const heading = document_root.createElement("h3");
+  heading.textContent = wizard.name;
+  container.append(heading);
+
+  const stats_list = document_root.createElement("ul");
+  const appendItem = (list, text) => {
+    const item = document_root.createElement("li");
+    item.textContent = text;
+    list.append(item);
+    return item;
+  };
+  appendItem(stats_list, `HP: ${wizard.health}/${wizard.maxHealth}`);
+  appendItem(stats_list, `Mana: ${wizard.mana}/${wizard.maxMana}`);
+  appendItem(stats_list, `Barrier: ${wizard.barrier}`);
+
+  const status_item = appendItem(stats_list, "Statuses: ");
+  if (wizard.activeStatuses.length === 0) {
+    status_item.textContent += "None";
+  } else {
+    const status_list = document_root.createElement("ul");
+    for (const status of wizard.activeStatuses) {
+      const definition = status_registry.get(status.status);
+      const duration_text = (definition.has_duration ?? true)
+        ? `TURNS: ${status.duration}` : "Until removed";
+      appendItem(status_list, `${status.status} (${duration_text}, TICK: ${status.tickDamage ?? 0})`);
+    }
+    status_item.append(status_list);
+  }
+  container.append(stats_list);
 }
 
 // Scene adapter: connect UI events to a supplied controller, then return cleanup.
 export function mountBattle(root, battle_controller) {
+  const battle_animation = mountBattleAnimation(root);
   const battle_view = new BattleView(root);
   battle_view.populateSpells(battle_controller.spells);
   const unbind_actions = battle_view.bindActions({
     onCast(spell_id) {
-      try { battle_controller.cast(spell_id); }
+      try {
+        const battle_round = battle_controller.cast(spell_id);
+        void battle_animation.play(battle_round);
+      }
       catch (error) { battle_controller.message = error.message; }
       battle_view.render(battle_controller);
     },
     onRestart() {
+      battle_animation.reset();
       battle_controller.restart();
       battle_view.render(battle_controller);
     },
   });
   battle_view.render(battle_controller);
-  return unbind_actions;
+  return () => { unbind_actions(); battle_animation.dispose(); };
 }

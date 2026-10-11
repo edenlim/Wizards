@@ -37,7 +37,7 @@ export function executeSpellEffects(action, battle_round, registry, damage, phas
     // Self effects still resolve when the spell loses; opponent effects need a win.
     const targets_opponent = (effect.target ?? "opponent") === "opponent";
     const clash_won = damage > 0;
-    if (targets_opponent && !clash_won) continue;
+    if (targets_opponent && !clash_won && !effect.bypassClash) continue;
     registry.execute(effect, battle_round, action);
   }
 }

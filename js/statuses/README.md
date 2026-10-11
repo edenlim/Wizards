@@ -29,11 +29,11 @@ You can also supply a registry to `new BattleEngine({ statuses: your_registry })
 
 `wizard` is the affected wizard. `existing_statuses` contains all their active entries with the incoming status name. You decide whether to append, update an existing entry, or ignore the application. The architecture does not automatically create an entry: `onApply` owns that decision.
 
-`onTick` owns behavior only. The generic ticker already decreases duration and removes expired statuses; do not decrease duration a second time unless intentionally overriding the normal rule. New entries created after damage start ticking next round. Hooks run once per active instance.
+`onTick` owns behavior only. Set `has_duration` on the status definition: `true` for Burn and Frozen, `false` for permanent Poison. The ticker reads this shared rule directly from the registry; active instances only store instance values such as remaining duration and tick damage. Omitted `has_duration` defaults to `true`. For timed statuses, the ticker decreases duration and removes expired instances. Permanent statuses keep ticking until explicitly removed. New entries created after damage start ticking next round. Hooks run once per active instance.
 
 ## Your implementation tasks
 
-- **Poison:** implement your single-instance and damage-accumulation rule in its `onApply`. Implement damage behavior in its `onTick`. Decide the first application's duration in spell data.
+- **Poison:** its `onApply` keeps one instance and accumulates tick damage. Its `onTick` deals damage, and `has_duration: false` keeps it active until explicitly removed. No duration is required in spell data.
 - **Bleeding:** implement your duration-accumulation rule in its `onApply`, and tick behavior in `onTick`.
 - **Frozen:** decide its reapplication rule in `onApply`, then choose the behavior callback appropriate to what Frozen actually does.
 
